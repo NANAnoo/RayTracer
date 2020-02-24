@@ -34,6 +34,24 @@ Camera::Camera(Vec3 Lookfrom, Vec3 Lookat, Vec3 Vup, float vfov, float aspect)
 	vertical = v * 2.0f*half_height;
 }
 
+void Camera::LookAt(Vec3 Lookfrom, Vec3 Lookat, Vec3 Vup, float vfov, float aspect)
+{
+	Vec3 u, v, w;
+	float theta = vfov * PI / 180;
+
+	float half_height = tan(theta / 2.0f);
+	float half_width = half_height * aspect;
+	origin = Lookfrom;
+	w = (Lookfrom - Lookat).normalize();
+	u = Vup.Cross(w).normalize();
+	v = w.Cross(u).normalize();
+	lower_left = origin - u * half_width - v * half_height - w;
+	horizontal = u * 2.0f*half_width;
+	vertical = v * 2.0f*half_height;
+}
+
+
+
 Ray Camera::GetRay(float u, float v)
 {
 	Ray r = Ray(origin, (lower_left + horizontal * u + vertical * v - origin).normalize());

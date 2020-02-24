@@ -1,5 +1,6 @@
 #pragma once
 #include "Ray.h"
+//AABBÅö×²ºÐ
 class AABB
 {
 public:

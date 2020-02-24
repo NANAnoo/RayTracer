@@ -87,3 +87,16 @@ float Vec3::z()
 	return  Array[2];
 }
 
+void Vec3::setX(float x)
+{
+	Array[0] = x;
+}
+
+void Vec3::setY(float y)
+{
+	Array[1] = y;
+}
+void Vec3::setZ(float z)
+{
+	Array[2] = z;
+}

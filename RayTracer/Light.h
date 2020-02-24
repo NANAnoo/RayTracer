@@ -1,5 +1,6 @@
 #pragma once
 #include "Material.h"
+//发光物体
 class Light :
 	public Material
 {

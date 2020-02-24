@@ -15,7 +15,7 @@ Image::Image(int w, int h, char * buffer)
 		Buffer[i] = buffer[i];
 }
 
-Image::Image(vector<vector<Color>> MAT)
+Image::Image(vector<vector<Color> > MAT)
 {
 	HEIGHT = MAT.size();
 	WIDTH = MAT[0].size();

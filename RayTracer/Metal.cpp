@@ -27,7 +27,7 @@ Vec3 Metal::reflect(Ray r, HitRecord rec, bool & flag)
 	Vec3 n = rec.normal.normalize();
 	Vec3 ref = v - n * (v*n)*2.0f;
 	flag = ref * n > 0;
-	return ref + randomInUnitSphere()*std::fmin(fuzz,ref.normalize()*n);
+	return ref + randomInUnitSphere()*fmin(fuzz,ref.normalize()*n);
 }
 
 Vec3 Metal::randomInUnitSphere()

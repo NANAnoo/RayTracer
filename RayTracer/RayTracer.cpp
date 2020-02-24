@@ -2,6 +2,9 @@
 //
 
 #include "pch.h"
+
+#include <opencv.hpp>
+
 #include "Color.h"
 #include "Image.h"
 #include "Ray.h"
@@ -17,43 +20,21 @@
 #include "ConstantTexture.h"
 #include "ChessBoardTex.h"
 #include "ImageTex.h"
-
+#include <future>
+#include <thread>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-//
-//float hitSphere(Vec3 center, float radius, Ray r) {
-//	Vec3 oc = r.origin()-center;
-//	float a = r.direction()*r.direction();
-//	float b = 2.0f * (oc *r.direction());
-//	float c = oc * oc - radius * radius;
-//	float discriminant = b * b - 4 * a*c;
-//	if (discriminant < 0) {
-//		return -1.0f;
-//	}
-//	else {
-//		return (-b - sqrt(discriminant)) / (2.0f * a);
-//	}
-//}
-//
-//
-//Color color(Ray ray) {
-//	Vec3 center(0, 0, -1);
-//	float t = hitSphere(center, 0.5f, ray);
-//	if (t > 0.0f) {
-//		Vec3 N = (ray.posAt(t) - center).normalize();
-//		Color c((N + 1.0f)*0.5f);
-//		return c;
-//	}
-//	Vec3 dir = ray.direction().normalize();
-//	t = 0.5f*(dir.y() + 1.0f);
-//	return Color(Vec3(1, 1, 1)*(1.0 - t) + Vec3(0.5, 0.7, 1.0)*t);
-//}
-//
+#define PI 3.1415926
+float myRand(float down, float top) {
+	return ((float)(rand() % 100) / 100.0)*(top - down) + down;
+}
+
+//demo1
 vector<Hitable*> box() {
 	vector<Hitable*> objs;
 	unsigned char*data;
 	int width, height, nrChannels;
-	data = stbi_load("D:\\RT_result\\redstone_lamp.png", &width, &height, &nrChannels, 0);
+	data = stbi_load("D:\\RT_result\\redstone_lamp.png", &width, &height, &nrChannels, 0);//加载图片
 	objs.push_back(
 		//Light_white
 		new Rectangle(Vec3(-0.5, 1, -1.5), Vec3(1, 0, 0), Vec3(0, 0, -1),
@@ -123,6 +104,7 @@ vector<Hitable*> box() {
 	return objs;
 }
 
+//demo2
 vector<Hitable*> init() {
 	vector<Hitable*> objs;
 	unsigned char*data;
@@ -184,9 +166,9 @@ vector<Hitable*> init() {
 	}
 	objs.push_back(
 		new Sphere(Vec3(3, 0, -3),
-			1,
-			new Lambertian(),
-			new ConstantTexture(Vec3(0.9, 0.6, 0.9))
+			1.0,
+			new Dielectic(1.3),
+			new ConstantTexture(Vec3(1, 1, 1))
 		)
 	);
 	objs.push_back(
@@ -199,36 +181,132 @@ vector<Hitable*> init() {
 	objs.push_back(
 		new Rectangle(
 			Vec3(-2, -1, 2), Vec3(8, 0, 0), Vec3(0, 0, -8),
-			new Metal(1),
+			new Metal(0.5),
 			new ChessBoardTex(Vec3(0.1, 0.1, 0.1), Vec3(0.9, 0.9, 0.9))
 		)
 	);
 	return objs;
 }
-int main()
-{
-	int WIDTH = 800;
-	int HEIGHT = 800;
-	float sq2 = sqrt(2.0);
-	float lmda = 1.3;
-	vector<vector<Color>> Mat;
-	vector<Color> Line;
+
+//demo3
+vector<Hitable*> manySphere(int size) {
 	vector<Hitable*> objs;
-	World world(box());
+	for (int i = 0; i < size; i++) {
+		objs.push_back(
+			new Sphere(Vec3(myRand(-2.5,2.5), myRand(-2.5, 2.5), myRand(-2.5, 2.5)),
+				myRand(0.05, 0.1),
+				new Dielectic(1.3),
+				new ConstantTexture(Vec3(myRand(0, 1), myRand(0, 1), myRand(0, 1)))
+			)
+		);
+	}
+	for (int i = 0; i < size; i++) {
+		objs.push_back(
+			new Sphere(Vec3(myRand(-2.5, 2.5), myRand(-2.5, 2.5), myRand(-2.5, 2.5)),
+				myRand(0.05, 0.1),
+				new Lambertian(),
+				new ConstantTexture(Vec3(myRand(0, 1), myRand(0, 1), myRand(0, 1)))
+			)
+		);
+	}
+	for (int i = 0; i < size; i++) {
+		objs.push_back(
+			new Sphere(Vec3(myRand(-2.5, 2.5), myRand(-2.5, 2.5), myRand(-2.5, 2.5)),
+				myRand(0.05, 0.1),
+				new Metal(1),
+				new ConstantTexture(Vec3(myRand(0, 1), myRand(0, 1), myRand(0, 1)))
+			)
+		);
+	}
+	for (int i = 0; i < size; i++) {
+		objs.push_back(
+			new Sphere(Vec3(myRand(-2.5, 2.5), myRand(-2.5, 2.5), myRand(-2.5, 2.5)),
+				myRand(0.05, 0.1),
+				new Light(1),
+				new ConstantTexture(Vec3(myRand(0, 1), myRand(0, 1), myRand(0, 1)))
+			)
+		);
+	}
+	return objs;
+}
 
-	//int width, height, nrChannels;
-	//unsigned char* top = stbi_load("D:\\RT_result\\textures\\Sky\\bluesky\\bluesky_top.jpg", &width, &height, &nrChannels, 0);
-	//unsigned char* back = stbi_load("D:\\RT_result\\textures\\Sky\\bluesky\\bluesky_back.jpg", &width, &height, &nrChannels, 0);
-	//unsigned char* front = stbi_load("D:\\RT_result\\textures\\Sky\\bluesky\\bluesky_front.jpg", &width, &height, &nrChannels, 0);
-	//unsigned char* left = stbi_load("D:\\RT_result\\textures\\Sky\\bluesky\\bluesky_left.jpg", &width, &height, &nrChannels, 0);
-	//unsigned char* right = stbi_load("D:\\RT_result\\textures\\Sky\\bluesky\\bluesky_right.jpg", &width, &height, &nrChannels, 0);
-	//world.setSkyBox(top, top, front, back, left, right, width, nrChannels);
+void get_color(World &world,Camera &cam, cv::Mat &Mat,int WIDTH,int HEIGHT,int snns,int depth) {
+	future<void> ft1 = async(launch::async, [&] {
+		for (int i = 0; i < HEIGHT; i+=4) {
+			for (int j = 0; j < WIDTH; j++) {
+				Vec3 col(0, 0, 0);
+				for (int k = 0; k < snns; k++) {
+					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
+					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
+					col = col + world.color(cam.GetRay(u, v), depth);
+					depth = 10;
+				}
+				col = col * (1.0 / (float)snns);
+				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
+				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
+				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
+			}
+		}
+	});
+	future<void> ft2 = async(launch::async, [&] {
+		for (int i = 1; i < HEIGHT; i += 4) {
+			for (int j = 0; j < WIDTH; j++) {
+				Vec3 col(0, 0, 0);
+				for (int k = 0; k < snns; k++) {
+					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
+					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
+					col = col + world.color(cam.GetRay(u, v), depth);
+					depth = 10;
+				}
+				col = col * (1.0 / (float)snns);
+				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
+				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
+				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
+			}
+		}
+	});
+	future<void> ft3 = async(launch::async, [&] {
+		for (int i = 2; i < HEIGHT; i += 4) {
+			for (int j = 0; j < WIDTH; j++) {
+				Vec3 col(0, 0, 0);
+				for (int k = 0; k < snns; k++) {
+					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
+					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
+					col = col + world.color(cam.GetRay(u, v), depth);
+					depth = 10;
+				}
+				col = col * (1.0 / (float)snns);
+				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
+				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
+				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
+			}
+		}
+	});
+	future<void> ft4 = async(launch::async, [&] {
+		for (int i = 3; i < HEIGHT; i += 4) {
+			for (int j = 0; j < WIDTH; j++) {
+				Vec3 col(0, 0, 0);
+				for (int k = 0; k < snns; k++) {
+					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
+					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
+					col = col + world.color(cam.GetRay(u, v), depth);
+					depth = 10;
+				}
+				col = col * (1.0 / (float)snns);
+				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
+				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
+				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
+			}
+		}
+	});
+	ft1.wait();
+	ft2.wait();
+	ft3.wait();
+	ft4.wait();
+}
 
-	Camera cam(Vec3(0,0,8),Vec3(0, 0, 0),Vec3(0,1,0),30.0, (float)WIDTH / (float)HEIGHT);
-	int snns = 100;
-	int depth = 10;
-	for (int i = 0; i < HEIGHT; i++) {
-		Line.clear();
+void get_color_line(World world, Camera cam, cv::Mat Mat, int WIDTH, int HEIGHT, int snns, int depth, int s,int c) {
+	for (int i = s; i < HEIGHT; i += c) {
 		for (int j = 0; j < WIDTH; j++) {
 			Vec3 col(0, 0, 0);
 			for (int k = 0; k < snns; k++) {
@@ -236,15 +314,55 @@ int main()
 				float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
 				col = col + world.color(cam.GetRay(u, v), depth);
 				depth = 10;
-			}                                                                           
+			}
 			col = col * (1.0 / (float)snns);
-			Line.push_back(col);
+			Mat.at<uchar>(i, 3 * j) = col.z() * 255;
+			Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
+			Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
 		}
-		Mat.push_back(Line);
 	}
-	Image img(Mat);
-	img.save("D:\\RT_result\\test25.bmp");
+}
 
+void Get_color(World &world, Camera &cam, cv::Mat &Mat, int WIDTH, int HEIGHT, int snns, int depth, int core) {
+	vector<future<void> > Threads(core);
+	for (int t = 0; t < core;t++) {
+		Threads[t] = async(get_color_line,world,cam,Mat,WIDTH,HEIGHT,snns,depth,t,core);
+	}
+	for (auto &t : Threads)t.wait();
+}
+
+int main()
+{
+	int max_thread = thread::hardware_concurrency();
+	int WIDTH = 400;
+	int HEIGHT = 400;
+	vector<vector<Color> >mat(HEIGHT,vector<Color>(WIDTH));
+	//初始化世界（被观察对象均在此
+	World world(init(), false);
+	world.set_sky(BLUE_SKY);
+	Camera cam;
+	int snns = 10;//每个像素计算次数（曝光次数
+	int depth = 2;
+	cv::Mat frame(WIDTH,HEIGHT,CV_8UC3);
+	//get_color(world, cam, mat, snns, depth);
+	Vec3 center(2,-1,-2);
+	float R = 12,alpha = 0;
+	int f_r = 60;
+	cv::VideoWriter writer("D:\\RT_result\\test.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), f_r, cv::Size(WIDTH,HEIGHT), true);
+	int f_size = 6 * f_r;
+	float h = 2;
+	while (f_size--) {
+		cam.LookAt(center + Vec3(R*sinf(alpha), h, R*cosf(alpha)), center, Vec3(0, -1, 0), 40.0, (float)WIDTH / (float)HEIGHT);
+		alpha += PI / 18;
+		Get_color(world, cam, frame, WIDTH, HEIGHT, snns, depth, max_thread);
+		cv::imshow("frame", frame);
+		writer.write(frame);
+		if (cv::waitKey(10) > 0)break;
+	}
+	writer.release();
+	cv::destroyAllWindows();
+	system("pause");
+	return 0;
 }
 
 

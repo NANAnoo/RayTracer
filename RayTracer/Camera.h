@@ -10,7 +10,9 @@ public:
 
 	Camera();
 	Camera(Vec3 LL, Vec3 H, Vec3 V,Vec3 O);
+	// lookfrom, lookat,Vup
 	Camera(Vec3 Lookfrom, Vec3 Lookat, Vec3 Vup, float vfov,float aspect);
+	void LookAt(Vec3 Lookfrom, Vec3 Lookat, Vec3 Vup, float vfov, float aspect);
 	Ray GetRay(float u, float v);
 
 };

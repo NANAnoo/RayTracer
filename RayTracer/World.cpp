@@ -6,11 +6,12 @@ World::World()
 {
 }
 
-World::World(vector<Hitable*> list)
+World::World(vector<Hitable*> list,bool useBvh)
 {
 	unsigned char init[3] = { 0,0,0 };
 	setSkyBox(init, init,init, init, init, init, 1, 3);
-	if (list.size() > 8) {
+	type = NONE;
+	if (useBvh) {
 		Root = new BVHNode(list);
 		useBVH = true;
 	}
@@ -62,29 +63,50 @@ Vec3 World::color(Ray r, int &depth)
 	if (hit(r,0.0f, FLT_MAX,rec)){
 		Ray target;
 		if (depth > 0 && rec.M->scatter(r, rec, target))
-			return color(target, depth).Mul(rec.color);
+			return color(target, depth).Mul(rec.color)+rec.M->emmitted();
 		return rec.M->emmitted();
 	}
-	//return Vec3(0, 0, 0);
 	else {
-		//Vec3 dir = r.direction().normalize();
-		//float t = 0.5f*(dir.y() + 1.0f);
-		//return Vec3(1, 1, 1)*(1.0 - t) + Vec3(0.5, 0.7, 1.0)*t;
-		return Vec3(0, 0, 0);
+		switch (type)
+		{
+		case NONE:{
+			return Vec3(0, 0, 0);
+			break;
+		}
+		case BLUE_SKY:{
+			Vec3 dir = r.direction().normalize();
+			float t = 0.5f*(dir.y() + 1.0f);
+			return Vec3(1, 1, 1)*(1.0 - t) + Vec3(0.5, 0.7, 1.0)*t;
+			break;
+		}
+		case SKY_BOX: {
+			return Sky(r);
+			break;
+		}
+		default: {
+			return Vec3(0, 0, 0);
+			break;
+		}
+		}
 	}
+}
+
+void World::set_sky(SKYTYPE T)
+{
+	type = T;
 }
 
 Vec3 World::Sky(Ray r)
 {
 	Vec3 d = r.direction().normalize();
 	int index = 0;
-	float max = std::abs(d.x());
-	if (max < std::abs(d.y())) {
-		max = std::abs(d.y());
+	float max = abs(d.x());
+	if (max < abs(d.y())) {
+		max = abs(d.y());
 		index = 1;
 	}
-	if (max < std::abs(d.z())) {
-		max = std::abs(d.z());
+	if (max < abs(d.z())) {
+		max = abs(d.z());
 		index = 2;
 	}
 	unsigned char* img = NULL;

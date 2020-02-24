@@ -1,5 +1,6 @@
 #pragma once
 #include "Texture.h"
+//Œ∆¿Ì/∆Â≈ÃŒ∆¿Ì
 class ChessBoardTex :
 	public Texture
 {

@@ -1,5 +1,6 @@
 #pragma once
 #include "Hitable.h"
+//BVH½Úµã
 class BVHNode :
 	public Hitable
 {

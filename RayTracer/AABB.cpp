@@ -15,14 +15,14 @@ AABB::AABB(Vec3 mi, Vec3 ma)
 bool AABB::Hit(Ray r, float tmin, float tmax)
 {
 	for (int i = 0; i < 3; i++) {
-		float t0 = std::fmin(
+		float t0 = fmin(
 			(min.Array[i] - r.origin().Array[i]) / r.direction().Array[i],
 			(max.Array[i] - r.origin().Array[i]) / r.direction().Array[i]);
-		float t1 = std::fmax(
+		float t1 = fmax(
 			(min.Array[i] - r.origin().Array[i]) / r.direction().Array[i],
 			(max.Array[i] - r.origin().Array[i]) / r.direction().Array[i]);
-		tmin = std::fmax(t0, tmin);
-		tmax = std::fmin(t1, tmax);
+		tmin = fmax(t0, tmin);
+		tmax = fmin(t1, tmax);
 		if (tmax < tmin) {
 			return false;
 		}

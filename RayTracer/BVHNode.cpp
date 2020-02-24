@@ -97,14 +97,14 @@ bool BVHNode::compare(Hitable * a, Hitable * b)
 AABB BVHNode::GetBox(AABB l, AABB r)
 {
 	Vec3 min(
-		std::fmin(l.min.x(), r.min.x()),
-		std::fmin(l.min.y(), r.min.y()),
-		std::fmin(l.min.z(), r.min.z())
+		fmin(l.min.x(), r.min.x()),
+		fmin(l.min.y(), r.min.y()),
+		fmin(l.min.z(), r.min.z())
 	);
 	Vec3 max(
-		std::fmax(l.max.x(), r.max.x()),
-		std::fmax(l.max.y(), r.max.y()),
-		std::fmax(l.max.z(), r.max.z())
+		fmax(l.max.x(), r.max.x()),
+		fmax(l.max.y(), r.max.y()),
+		fmax(l.max.z(), r.max.z())
 	);
 	return AABB(min, max);
 }

@@ -6,7 +6,7 @@ class Image
 public:
 	Image();
 	Image(int w, int h, char *buffer);
-	Image(vector<vector<Color>> MAT);
+	Image(vector<vector<Color> > MAT);
 	void save(const char* filename);
 	~Image();
 private:

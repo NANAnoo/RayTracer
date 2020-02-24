@@ -11,6 +11,9 @@
 
 // TODO: 添加要在此处预编译的标头
 #include <iostream>
+#include <math.h>
+#include <cstdlib>
+#include <stdio.h>
 using namespace std;
 #include <vector>
 #endif //PCH_H
