@@ -60,7 +60,7 @@ Vec3 World::color(Ray r, int &depth)
 {
 	HitRecord rec;
 	depth--;
-	if (hit(r,0.0f, FLT_MAX,rec)){
+	if (hit(r,0.0f, 3.402823466e+38F,rec)){
 		Ray target;
 		if (depth > 0 && rec.M->scatter(r, rec, target))
 			return color(target, depth).Mul(rec.color)+rec.M->emmitted();
