@@ -25,6 +25,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define PI 3.1415926
+
 float myRand(float down, float top) {
 	return ((float)(rand() % 100) / 100.0)*(top - down) + down;
 }
@@ -167,8 +168,15 @@ vector<Hitable*> init() {
 	objs.push_back(
 		new Sphere(Vec3(3, 0, -3),
 			1.0,
-			new Dielectic(1.3),
+			new Metal(0),
 			new ConstantTexture(Vec3(1, 1, 1))
+		)
+	);
+	objs.push_back(
+		new Sphere(Vec3(3, 0, 0),
+			0.6,
+			new Lambertian(),
+			new ConstantTexture(Vec3(0.7, 0.88, 0.9))
 		)
 	);
 	objs.push_back(
@@ -230,81 +238,6 @@ vector<Hitable*> manySphere(int size) {
 	return objs;
 }
 
-void get_color(World &world,Camera &cam, cv::Mat &Mat,int WIDTH,int HEIGHT,int snns,int depth) {
-	future<void> ft1 = async(launch::async, [&] {
-		for (int i = 0; i < HEIGHT; i+=4) {
-			for (int j = 0; j < WIDTH; j++) {
-				Vec3 col(0, 0, 0);
-				for (int k = 0; k < snns; k++) {
-					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
-					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
-					col = col + world.color(cam.GetRay(u, v), depth);
-					depth = 10;
-				}
-				col = col * (1.0 / (float)snns);
-				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
-				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
-				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
-			}
-		}
-	});
-	future<void> ft2 = async(launch::async, [&] {
-		for (int i = 1; i < HEIGHT; i += 4) {
-			for (int j = 0; j < WIDTH; j++) {
-				Vec3 col(0, 0, 0);
-				for (int k = 0; k < snns; k++) {
-					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
-					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
-					col = col + world.color(cam.GetRay(u, v), depth);
-					depth = 10;
-				}
-				col = col * (1.0 / (float)snns);
-				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
-				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
-				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
-			}
-		}
-	});
-	future<void> ft3 = async(launch::async, [&] {
-		for (int i = 2; i < HEIGHT; i += 4) {
-			for (int j = 0; j < WIDTH; j++) {
-				Vec3 col(0, 0, 0);
-				for (int k = 0; k < snns; k++) {
-					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
-					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
-					col = col + world.color(cam.GetRay(u, v), depth);
-					depth = 10;
-				}
-				col = col * (1.0 / (float)snns);
-				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
-				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
-				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
-			}
-		}
-	});
-	future<void> ft4 = async(launch::async, [&] {
-		for (int i = 3; i < HEIGHT; i += 4) {
-			for (int j = 0; j < WIDTH; j++) {
-				Vec3 col(0, 0, 0);
-				for (int k = 0; k < snns; k++) {
-					float v = ((float)i + (float)rand() / RAND_MAX) / HEIGHT;
-					float u = ((float)j + (float)rand() / RAND_MAX) / WIDTH;
-					col = col + world.color(cam.GetRay(u, v), depth);
-					depth = 10;
-				}
-				col = col * (1.0 / (float)snns);
-				Mat.at<uchar>(i, 3 * j) = col.z() * 255;
-				Mat.at<uchar>(i, 3 * j + 1) = col.y() * 255;
-				Mat.at<uchar>(i, 3 * j + 2) = col.x() * 255;
-			}
-		}
-	});
-	ft1.wait();
-	ft2.wait();
-	ft3.wait();
-	ft4.wait();
-}
-
 void get_color_line(World world, Camera cam, cv::Mat Mat, int WIDTH, int HEIGHT, int snns, int depth, int s,int c) {
 	for (int i = s; i < HEIGHT; i += c) {
 		for (int j = 0; j < WIDTH; j++) {
@@ -334,26 +267,26 @@ void Get_color(World &world, Camera &cam, cv::Mat &Mat, int WIDTH, int HEIGHT, i
 int main()
 {
 	int max_thread = thread::hardware_concurrency();
-	int WIDTH = 400;
-	int HEIGHT = 400;
+	int WIDTH = 600;
+	int HEIGHT = 600;
 	vector<vector<Color> >mat(HEIGHT,vector<Color>(WIDTH));
 	//初始化世界（被观察对象均在此
 	World world(init(), false);
 	world.set_sky(BLUE_SKY);
 	Camera cam;
-	int snns = 10;//每个像素计算次数（曝光次数
-	int depth = 2;
+	int snns = 100;//每个像素计算次数（曝光次数
+	int depth = 10;
 	cv::Mat frame(WIDTH,HEIGHT,CV_8UC3);
 	//get_color(world, cam, mat, snns, depth);
 	Vec3 center(2,-1,-2);
 	float R = 12,alpha = 0;
 	int f_r = 60;
 	cv::VideoWriter writer("D:\\RT_result\\test.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), f_r, cv::Size(WIDTH,HEIGHT), true);
-	int f_size = 6 * f_r;
-	float h = 2;
+	int f_size = 60 * f_r;
+	float h = 4;
 	while (f_size--) {
 		cam.LookAt(center + Vec3(R*sinf(alpha), h, R*cosf(alpha)), center, Vec3(0, -1, 0), 40.0, (float)WIDTH / (float)HEIGHT);
-		alpha += PI / 18;
+		alpha += PI / 1800;
 		Get_color(world, cam, frame, WIDTH, HEIGHT, snns, depth, max_thread);
 		cv::imshow("frame", frame);
 		writer.write(frame);
